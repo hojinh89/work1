@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration
+        PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-config.dtd">
+
+<configuration>
+	<!-- 
+		BoardMapper.xml같은 매퍼파일에서 resultType을 별칭으로 처리.
+	 -->
+	<typeAliases>
+		<typeAlias type="com.spring.hp.model.BoardVO" alias="BoardVO" />
+		<typeAlias type="com.spring.hp.user.model.UserVO" alias="UserVO" />
+		<typeAlias type="com.spring.hp.reply.model.ReplyVO" alias="ReplyVO"/>
+	</typeAliases>
+
+</configuration>

@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+  <mapper namespace = "BoardMapper">
+  
+  		<!-- 프로퍼티가 db칼럼명이랑 일치할경우 자동으로 맵핑됨. -->
+  		<!-- DB칼럼명이 VO의 필드명과 다를경우를 위해 처리 방법 지정 -->
+  		<resultMap id="BoardResultMap" type="BoardVO">
+  			<id property = "boardNo" column = "board_no"/>
+  			<result property = "title" column="title"/>
+  			<result property = "content" column="content"/>
+  			<result property = "writer" column="writer"/>
+  			<result property = "regDate" column = "reg_date"/>
+  			<result property = "viewCnt" column = "view_cnt"/>
+  			<result property = "replyCnt" column = "reply_cnt"/>
+  		
+  			<result property = "fileId" column = "file_id"/>
+  			<result property = "fileName" column = "file_name" /> 	        
+			<result property = "fileSize" column = "file_size" /> 	        
+			<result property = "fileContentType" column = "file_content_type" /> 	    
+  			
+  		</resultMap>
+  		
+  		<!-- 업로드용 fileMap -->
+  		<resultMap id="FileMap" type="com.spring.hp.model.BoardUploadFileVO">
+  			<id property = "fileId" column="file_id"/>
+  			<result property = "boardNo" column = "board_no" />
+		<result property = "fileName" column = "file_name" /> 	        
+		<result property = "fileSize" column = "file_size" /> 	        
+		<result property = "fileContentType" column = "file_content_type" /> 	
+		<result property = "fileData" column = "file_data" />
+  			
+  		</resultMap>
+  
+  	<!--  게시물 등록 -->
+  	<insert id="insert">
+  		INSERT INTO mvc_board (title, content, writer) 
+  		VALUES (#{title}, #{content}, #{writer})
+  	
+  	</insert>
+  
+  	<!--  게시물 조회 -->
+  	<select id="getArticle" resultMap = "BoardResultMap">
+  		SELECT A.board_no AS board_no,
+  				title, content, writer, reg_date, view_cnt, reply_cnt,
+  				U.file_id, U.file_name, U.file_size, U.file_content_type
+  		FROM mvc_board A
+  		LEFT OUTER JOIN mvc_board_upload U
+  		ON A.board_no = U.board_no
+  		WHERE A.board_no = #{boardNo}
+  	</select>
+  
+  
+  	<!--  전체 게시물 조회 -->
+  	<select id="getAllArticles" resultMap = "BoardResultMap">
+  		<![CDATA[
+    	SELECT * FROM mvc_board 
+    	WHERE board_no > 0 
+    	ORDER BY board_no DESC
+    	]]>
+  	
+  	</select>
+  	
+  	
+  	 <!-- 페이지별 게시물 조회 -->
+    <select id="listPaging" resultMap="BoardResultMap">
+    	
+    	SELECT * FROM mvc_board 
+    	ORDER BY board_no DESC 
+    	LIMIT #{pageStart}, #{countPerPage}
+    	
+    </select>
+    
+    <select id="countArticles" resultType="int">
+        
+        SELECT
+            COUNT(board_no)
+        FROM mvc_board
+        
+    </select>
+  	
+  	<!--  게시물 수정 -->
+	<update id="modify">
+		UPDATE mvc_board 
+		SET title = #{title}, content = #{content} 
+		where board_no = #{boardNo}
+		
+		
+	</update>
+	
+	<!--  게시물 삭제 -->
+  	<delete id = "delete">
+  		DELETE FROM mvc_board 
+  		WHERE board_no = #{boardNo}
+  	</delete>
+  
+  	<!--  검색된 게시물 수 조회 -->
+  	<select id="countSearchedArticles" resultType="int">
+  		SELECT COUNT(*)
+  		FROM mvc_board
+  		<include refid="search"/>
+  	</select>
+  
+  	<!--  검색된 게시물 목록 조회 -->
+  	<select id="listSearch" resultMap="BoardResultMap">
+  		SELECT * FROM mvc_board
+  		<include refid="search"/>
+  		ORDER BY board_no DESC
+  		LIMIT #{pageStart}, #{countPerPage}
+  	</select>
+  
+  	<!--  중복되는 동적 sql구문 처리 -->
+  	<sql id="search">
+  		<if test="condition != '' ">
+  			<if test="condition == 'title'">
+  				WHERE title LIKE CONCAT("%", #{keyword}, '%')
+   			</if>
+ 			<if test="condition == 'writer'">
+ 				WHERE writer LIKE CONCAT("%", #{keyword}, '%')
+ 			</if>
+ 			<if test="condition == 'content'">
+ 				WHERE content LIKE CONCAT("%", #{keyword}, '%')
+ 			</if>
+ 		</if>
+  	
+  	</sql>
+  	
+  	<!-- 선택한게시물 조회수 증가 -->
+  	<update id="updateViewCnt">
+  	UPDATE mvc_board
+  	set view_cnt = view_cnt+1
+  	where board_no = #{boardNo}
+  	</update> 
+  	
+  	<!--  댓글 수 수정 SQL -->
+	<update id="updateReplyCnt">
+		UPDATE mvc_board 
+		SET reply_cnt = reply_cnt + #{count} 
+		WHERE board_no = #{boardNo}
+	</update>	
+	
+	
+	<!--  ///////////////////파일업로드 ////////////////////-->
+  	<!--  첨부파일 등록 -->
+  	<insert id="insertFile">
+  		INSERT INTO mvc_board_upload 
+  			(board_no, file_name, file_size, file_content_type, file_data) 
+  		VALUES (#{boardNo}, #{fileName}, #{fileSize}, #{fileContentType}, #{fileData})
+  	</insert>
+  	
+  	<!-- 최대번호 리뷰조회 -->
+  	<select id="selectMaxBoardNo" resultType="int">
+  		SELECT
+  			MAX(board_no) 
+  		FROM mvc_board
+  	</select>
+  	
+  	<!-- 파일 조회 기능 -->
+  	<select id="getFile" resultMap = "FileMap">
+  		SELECT *
+  		FROM mvc_board_upload 
+  		WHERE file_id = #{fileId}
+  	</select>
+  </mapper>
+  
+  

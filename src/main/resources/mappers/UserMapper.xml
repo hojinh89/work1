@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<!-- xml을 구현클래스로 만들어보기 -->
+  <mapper namespace="com.spring.hp.user.repository.IUserDAO">
+	
+	
+	<resultMap id="UserResultMap" type="UserVO">
+		<id property = "userId" column="user_id"/>
+		<result property="userPw" column="user_pw"/>
+		<result property="userName" column="user_name"/>
+		<result property="userRegDate" column="user_reg_date" />
+		<result property="sessionId" column="session_id" />
+		<result property="sessionLimit" column="session_limit" />
+		
+	</resultMap>
+	
+	<!-- 업로드용 fileMap -->
+	<resultMap id="FileMap" type="com.spring.hp.user.model.UserUploadFileVO">
+	<id property="fileId" column="file_id"/>
+	<result property="userId" column = "user_id"/>
+	<result property = "fileName" column= "file_name" />
+	<result property = "fileSize" column = "file_size" /> 	        
+	<result property = "fileContentType" column = "file_content_type" /> 	
+	<result property = "fileData" column = "file_data" />
+	</resultMap>
+
+	<!--  회원 등록 sql -->
+	<insert id="register">
+		INSERT INTO mvc_user 
+		(user_id, user_pw, user_name)
+		VALUES (#{userId}, #{userPw}, #{userName});
+	</insert>
+	
+	<!-- 아이디 중복 체크 sql -->
+	<select id="isDuplicateId" resultType="int">
+		SELECT COUNT(*)
+		FROM mvc_user
+		WHERE user_id = #{userId}
+	</select>
+	
+	<!--  로그인처ㅣㄹ SQL -->
+	<select id="login" resultMap="UserResultMap">
+		SELECT * 
+		FROM mvc_user 
+		WHERE user_id=#{userId}
+	
+	</select>
+	
+	<!--  자동로그인을 체크할경우 세션아이디와 로그인 유지시간을 갱신 -->
+	<update id="keepLogin">
+		UPDATE mvc_user
+		SET session_id=#{sessionId}, 
+			session_limit=#{sessionLimit} 
+		WHERE user_id=#{userId}
+	</update>
+
+	<!--  자동로그인을 사용한 방문자가 재방문했을시
+		로그인 쿠키의 세션 아이디와 일치하는 회원의 정보를 불러움
+		 -->
+		 <select id="getUserWithSessionId" resultMap = "UserResultMap">
+		 	SELECT * FROM mvc_user 
+		 	WHERE session_id=#{sessionId}
+		 
+		 </select>
+		 
+	<!-- /////파일업로드 -->
+	<insert id="registerFile">
+		INSERT INTO mvc_user_upload 
+			(user_id, file_name, file_size, file_content_type, file_data) 
+		VALUES (#{userId}, #{fileName}, #{fileSize}, #{fileContentType}, #{fileData})	
+	</insert>
+	
+	<!-- 파일 조회 기능 -->
+  	<select id="getFile" resultMap = "FileMap">
+  		SELECT *
+  		FROM mvc_user_upload 
+  		WHERE user_id = #{userId}
+  	</select>
+	
+	<!-- /////파일업로드 -->
+	<insert id="insertFile">
+		INSERT INTO mvc_user_upload 
+			(user_id, file_name, file_size, file_content_type, file_data) 
+		VALUES (#{userId}, #{fileName}, #{fileSize}, #{fileContentType}, #{fileData})	
+	</insert>
+	
+	<update id="updateFile">
+		UPDATE mvc_user_upload
+		SET file_name = #{fileName}, file_size = #{fileSize}, file_content_type = #{fileContentType}, file_data = #{fileData}
+		WHERE user_id = #{userId}
+	</update>
+	
+	<select id="chkFile" resultType = "int">
+		SELECT COUNT(*)
+		FROM mvc_user_upload
+		WHERE user_id = #{userId}
+	</select>
+	
+</mapper>
